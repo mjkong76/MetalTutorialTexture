@@ -53,9 +53,8 @@ class MetalViewController: UIViewController {
         metalLayer.device = device           // 2
         metalLayer.pixelFormat = .bgra8Unorm // 3
         metalLayer.framebufferOnly = true    // 4
-        metalLayer.frame = view.layer.frame  // 5
-        view.layer.addSublayer(metalLayer)   // 6
-        
+        view.layer.addSublayer(metalLayer)   // 5
+
         // 1
         let defaultLibrary = device.makeDefaultLibrary()!
         let fragmentProgram = defaultLibrary.makeFunction(name: "basic_fragment")
@@ -75,6 +74,22 @@ class MetalViewController: UIViewController {
         timer = CADisplayLink(target: self, selector: #selector(MetalViewController.newFrame(displayLink:)))
         timer.add(to: RunLoop.main, forMode: RunLoop.Mode.default)
     }
+    
+    //1
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if let window = view.window {
+            let scale = window.screen.nativeScale
+            let layerSize = view.bounds.size
+            //2
+            view.contentScaleFactor = scale
+            metalLayer.frame = CGRect(x: 0, y: 0, width: layerSize.width, height: layerSize.height)
+            metalLayer.drawableSize = CGSize(width: layerSize.width * scale, height: layerSize.height * scale)
+        }
+        projectionMatrix = Matrix4.makePerspectiveViewAngle(Matrix4.degrees(toRad: 85.0), aspectRatio: Float(self.view.bounds.size.width / self.view.bounds.size.height), nearZ: 0.01, farZ: 100.0)
+    }
+    
     
     func render() {
         guard let drawable = metalLayer?.nextDrawable() else { return }
